@@ -1,0 +1,38 @@
+version: '3'
+services:
+  client:
+    build:
+      context: .
+      dockerfile: mqtt-client/Dockerfile
+    depends_on:
+      - server
+
+  server:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+    expose:
+      - "1883"
+    volumes:
+      - ./mqtt-server/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mqtt-server/passwd:/mosquitto/passwd
+
+  redis:
+    image: redis:5
+    ports:
+      - "6379:6379"
+
+  app:
+    build:
+      context: ./mysite
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: always
+    environment:
+      - MQTT_HOST=server
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+      - server
+
